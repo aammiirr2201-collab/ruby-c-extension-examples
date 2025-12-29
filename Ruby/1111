@@ -1,0 +1,42 @@
+model = Sketchup.active_model
+ents  = model.active_entities
+sel   = model.selection
+
+faces = sel.grep(Sketchup::Face)
+
+if faces.empty?
+  UI.messagebox("هیچ Faceای انتخاب نشده")
+  return
+end
+
+model.start_operation("2mm Gold Polish Group", true)
+
+# گروه‌کردن
+group = ents.add_group(faces)
+gents = group.entities
+
+# ضخامت 2 میلی‌متر
+faces.each do |f|
+  begin
+    f.pushpull(2.mm)
+  rescue
+  end
+end
+
+# ساخت متریال طلایی
+mats = model.materials
+gold = mats["Gold_Polished"] || mats.add("Gold_Polished")
+gold.color = Sketchup::Color.new(212, 175, 55)
+gold.shininess = 80
+
+# اعمال متریال
+group.material = gold
+
+# نرم‌کردن لبه‌ها (حس پولیش)
+edges = gents.grep(Sketchup::Edge)
+edges.each do |e|
+  e.soft = true
+  e.smooth = true
+end
+
+model.commit_operation
